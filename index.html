@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi 俄罗斯方块</title>
+    <style>
+        body {
+            margin: 0;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: monospace;
+            color: white;
+            flex-direction: column;
+        }
+        canvas {
+            border: 3px solid #0f0;
+            image-rendering: pixelated;
+        }
+        .info {
+            margin-top: 10px;
+            text-align: center;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background: #0f0;
+            color: black;
+            border: none;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Pi 俄罗斯方块</h1>
+    <canvas id="game" width="320" height="640"></canvas>
+    <div class="info">
+        <div>得分: <span id="score">0</span></div>
+        <div>↑ 旋转 | ← → 移动 | ↓ 加速 | 空格 硬降</div>
+        <button onclick="startGame()">重新开始</button>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('game');
+        const ctx = canvas.getContext('2d');
+        const scoreElement = document.getElementById('score');
+
+        const grid = 32;
+        let score = 0;
+
+        // 游戏区域 10x20
+        let playfield = Array.from({length: 20}, () => Array(10).fill(0));
+
+        const tetrominos = {
+            'I': [[0,0,0,0], [1,1,1,1], [0,0,0,0], [0,0,0,0]],
+            'J': [[1,0,0], [1,1,1], [0,0,0]],
+            'L': [[0,0,1], [1,1,1], [0,0,0]],
+            'O': [[1,1], [1,1]],
+            'S': [[0,1,1], [1,1,0], [0,0,0]],
+            'Z': [[1,1,0], [0,1,1], [0,0,0]],
+            'T': [[0,1,0], [1,1,1], [0,0,0]]
+        };
+
+        const colors = {
+            'I': '#0ff', 'O': '#ff0', 'T': '#f0f',
+            'S': '#0f0', 'Z': '#f00', 'J': '#00f', 'L': '#fa0'
+        };
+
+        let tetrominoSequence = [];
+        let tetromino = null;
+        let count = 0;
+        let gameOver = false;
+        let rAF = null;
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function generateSequence() {
+            const seq = ['I','J','L','O','S','T','Z'];
+            while (seq.length) {
+                const rand = getRandomInt(0, seq.length - 1);
+                tetrominoSequence.push(seq.splice(rand, 1)[0]);
+            }
+        }
+
+        function getNextTetromino() {
+            if (tetrominoSequence.length === 0) generateSequence();
+            const name = tetrominoSequence.pop();
+            const matrix = tetrominos[name];
+
+            return {
+                name: name,
+                matrix: matrix,
+                row: name === 'I' ? -1 : -2,
+                col: Math.floor(10 / 2 - matrix[0].length / 2)
+            };
+        }
+
+        function rotate(matrix) {
+            const N = matrix.length - 1;
+            return matrix.map((row, i) =>
+                row.map((val, j) => matrix[N - j][i])
+            );
+        }
+
+        function isValidMove(matrix, row, col) {
+            for (let r = 0; r < matrix.length; r++) {
+                for (let c = 0; c < matrix[r].length; c++) {
+                    if (matrix[r][c] && (
+                        col + c < 0 ||
+                        col + c >= 10 ||
+                        row + r >= 20 ||
+                        (row + r >= 0 && playfield[row + r][col + c])
+                    )) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function placeTetromino() {
+            for (let r = 0; r < tetromino.matrix.length; r++) {
+                for (let c = 0; c < tetromino.matrix[r].length; c++) {
+                    if (tetromino.matrix[r][c]) {
+                        if (tetromino.row + r < 0) {
+                            gameOver = true;
+                            return;
+                        }
+                        playfield[tetromino.row + r][tetromino.col + c] = tetromino.name;
+                    }
+                }
+            }
+
+            // 消行
+            for (let row = 19; row >= 0; ) {
+                if (playfield[row].every(cell => !!cell)) {
+                    playfield.splice(row, 1);
+                    playfield.unshift(Array(10).fill(0));
+                    score += 100;
+                } else {
+                    row--;
+                }
+            }
+
+            tetromino = getNextTetromino();
+            scoreElement.textContent = score;
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 画固定方块
+            for (let r = 0; r < 20; r++) {
+                for (let c = 0; c < 10; c++) {
+                    if (playfield[r][c]) {
+                        ctx.fillStyle = colors[playfield[r][c]];
+                        ctx.fillRect(c * grid, r * grid, grid - 1, grid - 1);
+                    }
+                }
+            }
+
+            // 画当前方块
+            if (tetromino) {
+                ctx.fillStyle = colors[tetromino.name];
+                for (let r = 0; r < tetromino.matrix.length; r++) {
+                    for (let c = 0; c < tetromino.matrix[r].length; c++) {
+                        if (tetromino.matrix[r][c]) {
+                            ctx.fillRect(
+                                (tetromino.col + c) * grid,
+                                (tetromino.row + r) * grid,
+                                grid - 1, grid - 1
+                            );
+                        }
+                    }
+                }
+            }
+        }
+
+        function loop() {
+            rAF = requestAnimationFrame(loop);
+            draw();
+
+            if (gameOver) return;
+
+            count++;
+            if (count > 30) {  // 下落速度，可调小更快
+                tetromino.row++;
+                if (!isValidMove(tetromino.matrix, tetromino.row, tetromino.col)) {
+                    tetromino.row--;
+                    placeTetromino();
+                }
+                count = 0;
+            }
+        }
+
+        // 键盘控制
+        document.addEventListener('keydown', e => {
+            if (gameOver || !tetromino) return;
+
+            let newCol = tetromino.col;
+            let newRow = tetromino.row;
+            let newMatrix = tetromino.matrix;
+
+            switch (e.key) {
+                case 'ArrowLeft':
+                    newCol--;
+                    break;
+                case 'ArrowRight':
+                    newCol++;
+                    break;
+                case 'ArrowDown':
+                    newRow++;
+                    break;
+                case 'ArrowUp':
+                    newMatrix = rotate(tetromino.matrix);
+                    break;
+                case ' ':
+                    // 硬降
+                    while (isValidMove(tetromino.matrix, tetromino.row + 1, tetromino.col)) {
+                        tetromino.row++;
+                        score += 2;
+                    }
+                    placeTetromino();
+                    return;
+            }
+
+            if (isValidMove(newMatrix, newRow, newCol)) {
+                tetromino.col = newCol;
+                tetromino.row = newRow;
+                tetromino.matrix = newMatrix;
+            }
+        });
+
+        function startGame() {
+            playfield = Array.from({length: 20}, () => Array(10).fill(0));
+            tetrominoSequence = [];
+            score = 0;
+            scoreElement.textContent = '0';
+            gameOver = false;
+            tetromino = getNextTetromino();
+            if (rAF) cancelAnimationFrame(rAF);
+            loop();
+        }
+
+        // 启动游戏
+        startGame();
+    </script>
+</body>
+</html>
