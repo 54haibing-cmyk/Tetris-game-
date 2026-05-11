@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport"
+content="width=device-width,
+initial-scale=1,
+maximum-scale=1,
+user-scalable=no">
+
+<title>PI TETRIS</title>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+-webkit-tap-highlight-color:transparent;
+}
+
+html,body{
+
+width:100%;
+height:100%;
+overflow:hidden;
+
+background:
+linear-gradient(
+180deg,
+#0d3c77,
+#03162f);
+
+font-family:
+Arial,
+sans-serif;
+
+touch-action:none;
+
+}
+
+.game{
+
+position:relative;
+
+width:100vw;
+height:100vh;
+
+display:flex;
+flex-direction:column;
+justify-content:center;
+align-items:center;
+
+}
+
+/* 顶部 */
+
+.top{
+
+width:100%;
+
+display:flex;
+
+justify-content:space-between;
+
+padding:18px;
+
+position:absolute;
+
+top:0;
+
+left:0;
+
+}
+
+.panel{
+
+width:78px;
+
+padding:10px 6px;
+
+background:#102c4f;
+
+border-radius:14px;
+
+border:2px solid
+rgba(255,255,255,.15);
+
+text-align:center;
+
+color:white;
+
+box-shadow:
+0 4px 10px rgba(0,0,0,.35),
+inset 0 2px 8px rgba(255,255,255,.12);
+
+}
+
+.label{
+
+font-size:12px;
+opacity:.8;
+
+}
+
+.value{
+
+font-size:24px;
+font-weight:bold;
+
+}
+
+/* 游戏区 */
+
+.board-wrap{
+
+position:relative;
+
+width:min(82vw,320px);
+
+height:min(164vw,640px);
+
+max-height:70vh;
+
+border-radius:14px;
+
+background:#0a1830;
+
+border:4px solid #7fd4ff;
+
+overflow:hidden;
+
+box-shadow:
+0 0 25px rgba(0,180,255,.5);
+
+}
+
+canvas{
+
+width:100%;
+height:100%;
+display:block;
+
+background:
+linear-gradient(
+180deg,
+#10284f,
+#081426);
+
+}
+
+/* next */
+
+.next{
+
+position:absolute;
+
+right:12px;
+top:110px;
+
+width:82px;
+height:82px;
+
+border-radius:14px;
+
+background:#102c4f;
+
+border:2px solid
+rgba(255,255,255,.15);
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+}
+
+/* 按钮 */
+
+.controls{
+
+position:absolute;
+
+bottom:24px;
+
+display:flex;
+
+gap:12px;
+
+}
+
+.btn{
+
+width:56px;
+height:56px;
+
+border:none;
+
+border-radius:50%;
+
+font-size:26px;
+font-weight:bold;
+
+color:white;
+
+box-shadow:
+0 5px 12px rgba(0,0,0,.4),
+inset 0 2px 6px rgba(255,255,255,.25);
+
+}
+
+.left{
+background:#38b000;
+}
+
+.right{
+background:#9d4edd;
+}
+
+.rotate{
+background:#ff7b00;
+}
+
+.down{
+background:#00b4d8;
+}
+
+.hard{
+background:#ffbe0b;
+}
+
+/* 开始 */
+
+.overlay{
+
+position:absolute;
+
+inset:0;
+
+background:
+rgba(0,0,0,.6);
+
+display:flex;
+
+flex-direction:column;
+
+justify-content:center;
+align-items:center;
+
+z-index:10;
+
+}
+
+.overlay h1{
+
+font-size:42px;
+
+color:white;
+
+margin-bottom:20px;
+
+}
+
+.start{
+
+padding:14px 28px;
+
+border:none;
+
+border-radius:16px;
+
+font-size:20px;
+
+background:#2196f3;
+
+color:white;
+
+}
+
+.flash{
+
+animation:
+flash .16s infinite alternate;
+
+}
+
+@keyframes flash{
+
+from{
+filter:brightness(1);
+}
+
+to{
+filter:brightness(2.5);
+}
+
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+<div class="top">
+
+<div class="panel">
+<div class="label">SCORE</div>
+<div class="value" id="score">0</div>
+</div>
+
+<div class="panel">
+<div class="label">LINES</div>
+<div class="value" id="lines">0</div>
+</div>
+
+<div class="panel">
+<div class="label">LEVEL</div>
+<div class="value" id="level">1</div>
+</div>
+
+</div>
+
+<div class="board-wrap">
+
+<canvas id="board"></canvas>
+
+<div class="next">
+
+<canvas
+id="next"
+width="70"
+height="70"></canvas>
+
+</div>
+
+</div>
+
+<div class="controls">
+
+<button
+class="btn left"
+id="leftBtn">←</button>
+
+<button
+class="btn rotate"
+id="rotateBtn">↻</button>
+
+<button
+class="btn right"
+id="rightBtn">→</button>
+
+<button
+class="btn down"
+id="downBtn">↓</button>
+
+<button
+class="btn hard"
+id="hardBtn">⇣</button>
+
+</div>
+
+<div
+class="overlay"
+id="overlay">
+
+<h1>PI TETRIS</h1>
+
+<button
+class="start"
+id="startBtn">
+
+START
+
+</button>
+
+</div>
+
+</div>
+
+<script>
+
+/* 音效 */
+
+const audioCtx =
+new (
+window.AudioContext ||
+window.webkitAudioContext
+)();
+
+function beep(
+freq,
+time,
+type="square",
+vol=.04
+){
+
+const osc =
+audioCtx.createOscillator();
+
+const gain =
+audioCtx.createGain();
+
+osc.type=type;
+
+osc.frequency.value=freq;
+
+gain.gain.value=vol;
+
+osc.connect(gain);
+
+gain.connect(
+audioCtx.destination);
+
+osc.start();
+
+setTimeout(()=>{
+osc.stop();
+},time);
+
+}
+
+/* canvas */
+
+const canvas =
+document.getElementById("board");
+
+const ctx =
+canvas.getContext("2d");
+
+canvas.width=300;
+canvas.height=600;
+
+const nextCanvas =
+document.getElementById("next");
+
+const nctx =
+nextCanvas.getContext("2d");
+
+/* 游戏参数 */
+
+const COLS=10;
+const ROWS=20;
+const BLOCK=30;
+
+const colors=[
+
+null,
+
+"#00e5ff",
+"#ffe066",
+"#c77dff",
+"#80ed99",
+"#ff922b",
+"#ff6b6b",
+"#4d96ff"
+
+];
+
+const pieces=[
+
+[],
+
+[[1,1,1,1]],
+
+[[2,2],[2,2]],
+
+[[0,3,0],[3,3,3]],
+
+[[0,4,4],[4,4,0]],
+
+[[5,5,0],[0,5,5]],
+
+[[6,0,0],[6,6,6]],
+
+[[0,0,7],[7,7,7]]
+
+];
+
+let board;
+let score;
+let lines;
+let level;
+
+let paused=true;
+
+let dropCounter=0;
+let dropInterval=800;
+let last=0;
+
+/* 玩家 */
+
+let nextPiece;
+
+const player={
+
+pos:{x:0,y:0},
+
+matrix:null
+
+};
+
+/* 初始化 */
+
+function resetData(){
+
+board=
+Array.from(
+{length:ROWS},
+()=>Array(COLS).fill(0)
+);
+
+score=0;
+lines=0;
+level=1;
+
+dropInterval=800;
+
+}
+
+/* 创建方块 */
+
+function createPiece(){
+
+const type=
+1+Math.floor(Math.random()*7);
+
+return{
+matrix:pieces[type]
+};
+
+}
+
+/* 绘制方块 */
+
+function drawBlock(
+x,y,color
+){
+
+const px=x*BLOCK;
+const py=y*BLOCK;
+
+ctx.fillStyle=color;
+
+ctx.fillRect(
+px,
+py,
+BLOCK,
+BLOCK
+);
+
+ctx.fillStyle=
+"rgba(255,255,255,.35)";
+
+ctx.fillRect(
+px+2,
+py+2,
+BLOCK-4,
+8
+);
+
+ctx.fillStyle=
+"rgba(0,0,0,.22)";
+
+ctx.fillRect(
+px+6,
+py+14,
+BLOCK-12,
+BLOCK-18
+);
+
+ctx.strokeStyle=
+"rgba(255,255,255,.55)";
+
+ctx.lineWidth=2;
+
+ctx.strokeRect(
+px+1,
+py+1,
+BLOCK-2,
+BLOCK-2
+);
+
+}
+
+/* 绘制 */
+
+function draw(){
+
+ctx.clearRect(
+0,0,
+canvas.width,
+canvas.height
+);
+
+for(let y=0;y<ROWS;y++){
+
+for(let x=0;x<COLS;x++){
+
+ctx.strokeStyle=
+"rgba(255,255,255,.08)";
+
+ctx.strokeRect(
+x*BLOCK,
+y*BLOCK,
+BLOCK,
+BLOCK
+);
+
+if(board[y][x]){
+
+drawBlock(
+x,
+y,
+colors[board[y][x]]
+);
+
+}
+
+}
+
+}
+
+/* 当前方块 */
+
+if(player.matrix){
+
+player.matrix.forEach(
+(row,y)=>{
+
+row.forEach(
+(v,x)=>{
+
+if(v){
+
+drawBlock(
+x+player.pos.x,
+y+player.pos.y,
+colors[v]
+);
+
+}
+
+});
+
+});
+
+}
+
+}
+
+/* 碰撞 */
+
+function collide(){
+
+for(let y=0;
+y<player.matrix.length;
+y++){
+
+for(let x=0;
+x<player.matrix[y].length;
+x++){
+
+if(player.matrix[y][x]){
+
+const newX=
+x+player.pos.x;
+
+const newY=
+y+player.pos.y;
+
+if(
+newX<0 ||
+newX>=COLS ||
+newY>=ROWS
+){
+
+return true;
+
+}
+
+if(
+newY>=0 &&
+board[newY][newX]
+){
+
+return true;
+
+}
+
+}
+
+}
+
+}
+
+return false;
+
+}
+
+/* 合并 */
+
+function merge(){
+
+player.matrix.forEach(
+(row,y)=>{
+
+row.forEach(
+(v,x)=>{
+
+if(v){
+
+board[
+y+player.pos.y
+][
+x+player.pos.x
+]=v;
+
+}
+
+});
+
+});
+
+}
+
+/* 旋转 */
+
+function rotate(matrix){
+
+return matrix[0]
+.map((_,i)=>
+matrix.map(
+r=>r[i]
+).reverse()
+);
+
+}
+
+/* 消行 */
+
+function sweep(){
+
+let cleared=0;
+
+for(let y=ROWS-1;y>=0;y--){
+
+if(
+board[y].every(
+cell=>cell!==0
+)
+){
+
+board.splice(y,1);
+
+board.unshift(
+Array(COLS).fill(0)
+);
+
+cleared++;
+
+y++;
+
+}
+
+}
+
+if(cleared){
+
+canvas.classList.add(
+"flash"
+);
+
+setTimeout(()=>{
+
+canvas.classList.remove(
+"flash"
+);
+
+},180);
+
+beep(900,60);
+
+score+=
+cleared*100;
+
+lines+=cleared;
+
+if(lines>=level*10){
+
+level++;
+
+dropInterval=
+Math.max(
+150,
+800-level*45
+);
+
+beep(1400,120);
+
+}
+
+updateUI();
+
+}
+
+}
+
+/* next */
+
+function drawNext(){
+
+nctx.clearRect(
+0,0,70,70
+);
+
+nextPiece.matrix.forEach(
+(row,y)=>{
+
+row.forEach(
+(v,x)=>{
+
+if(v){
+
+nctx.fillStyle=
+colors[v];
+
+nctx.fillRect(
+x*16+10,
+y*16+10,
+14,
+14
+);
+
+}
+
+});
+
+});
+
+}
+
+/* reset */
+
+function resetPlayer(){
+
+player.matrix=
+nextPiece.matrix;
+
+nextPiece=
+createPiece();
+
+player.pos.y=0;
+
+player.pos.x=
+Math.floor(
+COLS/2-
+player.matrix[0]
+.length/2
+);
+
+drawNext();
+
+if(collide()){
+
+gameOver();
+
+}
+
+}
+
+/* 左右 */
+
+function move(dir){
+
+player.pos.x+=dir;
+
+if(collide()){
+
+player.pos.x-=dir;
+
+}else{
+
+beep(220,20);
+
+}
+
+}
+
+/* 下落 */
+
+function playerDrop(){
+
+player.pos.y++;
+
+if(collide()){
+
+player.pos.y--;
+
+merge();
+
+sweep();
+
+resetPlayer();
+
+beep(450,45);
+
+}
+
+dropCounter=0;
+
+}
+
+/* 硬降 */
+
+function hardDrop(){
+
+while(!collide()){
+
+player.pos.y++;
+
+}
+
+player.pos.y--;
+
+merge();
+
+sweep();
+
+resetPlayer();
+
+beep(1200,80);
+
+}
+
+/* 旋转 */
+
+function playerRotate(){
+
+const old=
+player.matrix;
+
+player.matrix=
+rotate(player.matrix);
+
+if(collide()){
+
+player.matrix=old;
+
+}else{
+
+beep(700,30);
+
+}
+
+}
+
+/* UI */
+
+function updateUI(){
+
+document
+.getElementById("score")
+.innerText=score;
+
+document
+.getElementById("lines")
+.innerText=lines;
+
+document
+.getElementById("level")
+.innerText=level;
+
+}
+
+/* GAME OVER */
+
+function gameOver(){
+
+paused=true;
+
+beep(180,400);
+
+setTimeout(()=>{
+beep(120,500);
+},180);
+
+const overlay=
+document.getElementById(
+"overlay"
+);
+
+overlay.style.display=
+"flex";
+
+overlay.innerHTML=`
+
+<h1>GAME OVER</h1>
+
+<button
+class="start"
+onclick="startGame()">
+
+RESTART
+
+</button>
+
+`;
+
+}
+
+/* update */
+
+function update(time=0){
+
+if(paused){
+
+requestAnimationFrame(update);
+
+return;
+
+}
+
+const delta=
+time-last;
+
+last=time;
+
+dropCounter+=delta;
+
+if(
+dropCounter>
+dropInterval
+){
+
+playerDrop();
+
+}
+
+draw();
+
+requestAnimationFrame(update);
+
+}
+
+/* 开始 */
+
+function startGame(){
+
+document
+.getElementById("overlay")
+.style.display="none";
+
+resetData();
+
+paused=false;
+
+nextPiece=
+createPiece();
+
+resetPlayer();
+
+updateUI();
+
+draw();
+
+beep(700,100);
+
+setTimeout(()=>{
+beep(1100,100);
+},120);
+
+}
+
+/* 按钮 */
+
+document
+.getElementById("leftBtn")
+.onclick=()=>move(-1);
+
+document
+.getElementById("rightBtn")
+.onclick=()=>move(1);
+
+document
+.getElementById("downBtn")
+.onclick=()=>playerDrop();
+
+document
+.getElementById("rotateBtn")
+.onclick=()=>playerRotate();
+
+document
+.getElementById("hardBtn")
+.onclick=()=>hardDrop();
+
+/* 键盘 */
+
+document.addEventListener(
+"keydown",
+e=>{
+
+if(e.key==="ArrowLeft")
+move(-1);
+
+if(e.key==="ArrowRight")
+move(1);
+
+if(e.key==="ArrowDown")
+playerDrop();
+
+if(e.key==="ArrowUp")
+playerRotate();
+
+if(e.key===" ")
+hardDrop();
+
+});
+
+/* start */
+
+document
+.getElementById("startBtn")
+.onclick=()=>{
+
+startGame();
+
+};
+
+/* 启动 */
+
+draw();
+update();
+
+</script>
+
+</body>
+</html>
