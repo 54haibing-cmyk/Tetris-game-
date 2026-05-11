@@ -2,877 +2,316 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport"
-content="width=device-width,
-initial-scale=1,
-maximum-scale=1,
-user-scalable=no,
-viewport-fit=cover">
-
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>星空俄罗斯方块</title>
 
 <style>
-
-*{
-    margin:0;
-    padding:0;
-    box-sizing:border-box;
-    -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
-    width:100%;
-    height:100%;
-    overflow:hidden;
-    font-family:-apple-system,BlinkMacSystemFont,sans-serif;
-    background:
-    radial-gradient(circle at top,#0f4d92,#02142d 70%);
-}
-
-body{
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-/* 整体自适应容器 */
-.game-shell{
-
-    position:relative;
-
-    width:min(100vw,500px);
-
-    aspect-ratio:9/16;
-
-    max-height:100vh;
-
-    overflow:hidden;
-
-    border-radius:28px;
-
-    background:
-    linear-gradient(
-    180deg,
-    #0d4d91,
-    #07254f 50%,
-    #04162f);
-
-    box-shadow:
-    inset 0 0 50px rgba(255,255,255,.08),
-    0 0 40px rgba(0,0,0,.6);
-
-}
-
-/* 星空背景 */
-.stars{
-    position:absolute;
-    inset:0;
-    overflow:hidden;
-}
-
-.star{
-    position:absolute;
-    width:3px;
-    height:3px;
-    border-radius:50%;
-    background:white;
-    opacity:.7;
-    animation:twinkle 3s infinite alternate;
-}
-
-@keyframes twinkle{
-    from{
-        opacity:.2;
-        transform:scale(.7);
-    }
-    to{
-        opacity:1;
-        transform:scale(1.4);
-    }
-}
-
-/* 游戏区域 */
-.play-area{
-
-    position:absolute;
-
-    left:50%;
-    top:50%;
-
-    transform:translate(-50%,-50%);
-
-    width:64%;
-
-    aspect-ratio:10/20;
-
-    border-radius:10px;
-
-    border:4px solid rgba(180,220,255,.9);
-
-    background:
-    linear-gradient(
-    rgba(0,90,180,.2),
-    rgba(0,20,60,.35));
-
-    box-shadow:
-    0 0 20px rgba(100,200,255,.5),
-    inset 0 0 25px rgba(255,255,255,.08);
-
-    overflow:hidden;
-}
-
-canvas{
-    width:100%;
-    height:100%;
-    display:block;
-}
-
-/* 左侧信息 */
-.left-ui{
-    position:absolute;
-    left:3%;
-    top:22%;
-    display:flex;
-    flex-direction:column;
-    gap:18px;
-}
-
-.info-box{
-    width:64px;
-    padding:10px 4px;
-    border-radius:10px;
-
-    background:
-    linear-gradient(
-    180deg,
-    rgba(0,0,0,.45),
-    rgba(0,40,100,.55));
-
-    border:1px solid rgba(255,255,255,.15);
-
-    text-align:center;
-
-    color:white;
-}
-
-.info-title{
-    font-size:15px;
-    margin-bottom:4px;
-}
-
-.info-value{
-    font-size:24px;
-    font-weight:bold;
-    color:#e7f7ff;
-}
-
-/* 右侧 */
-.right-ui{
-    position:absolute;
-    right:3%;
-    top:16%;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    gap:18px;
-}
-
-.pause-btn{
-
-    width:54px;
-    height:54px;
-    border-radius:50%;
-
-    border:none;
-
-    background:
-    radial-gradient(circle,#39d7ff,#0f5e96);
-
-    color:white;
-
-    font-size:24px;
-    font-weight:bold;
-
-    box-shadow:
-    0 0 15px rgba(80,220,255,.7);
-
-}
-
-.next-wrap{
-    text-align:center;
-    color:white;
-    font-size:18px;
-}
-
-.next-box{
-
-    margin-top:8px;
-
-    width:88px;
-    height:88px;
-
-    border-radius:10px;
-
-    background:
-    rgba(0,0,0,.45);
-
-    border:2px solid rgba(255,255,255,.18);
-
-    display:flex;
-    justify-content:center;
-    align-items:center;
-}
-
-#next{
-    width:72px;
-    height:72px;
-}
-
-/* 底部按钮 */
-.controls{
-
-    position:absolute;
-
-    left:50%;
-    bottom:4%;
-
-    transform:translateX(-50%);
-
-    width:92%;
-
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-
-}
-
-.ctrl{
-
-    width:18vw;
-    height:18vw;
-
-    max-width:72px;
-    max-height:72px;
-
-    min-width:54px;
-    min-height:54px;
-
-    border-radius:50%;
-
-    border:none;
-
-    color:white;
-
-    font-size:34px;
-    font-weight:bold;
-
-    box-shadow:
-    inset 0 4px 10px rgba(255,255,255,.45),
-    0 6px 15px rgba(0,0,0,.5);
-
-}
-
-.left-btn{
-    background:linear-gradient(#86ff42,#38a800);
-}
-
-.right-btn{
-    background:linear-gradient(#ff8cff,#bf38ff);
-}
-
-.down-btn{
-    background:linear-gradient(#4dfff3,#00a8a0);
-}
-
-.rotate-btn{
-    background:linear-gradient(#ffb18f,#ff5b4f);
-}
-
-/* 消除动画 */
-.flash{
-    animation:flash .25s alternate infinite;
-}
-
-@keyframes flash{
-    from{
-        filter:brightness(1);
-    }
-    to{
-        filter:brightness(2.6);
-    }
-}
-
-/* LEVEL动画 */
-.levelup{
-    position:absolute;
-    left:50%;
-    top:40%;
-    transform:translate(-50%,-50%);
-    font-size:42px;
-    color:#ffe75f;
-    font-weight:bold;
-    opacity:0;
-    text-shadow:
-    0 0 8px white,
-    0 0 20px gold,
-    0 0 40px orange;
-}
-
-.level-show{
-    animation:lv 1.4s ease;
-}
-
-@keyframes lv{
-    0%{
-        opacity:0;
-        transform:translate(-50%,-50%) scale(.2);
-    }
-
-    30%{
-        opacity:1;
-        transform:translate(-50%,-50%) scale(1.2);
-    }
-
-    70%{
-        opacity:1;
-    }
-
-    100%{
-        opacity:0;
-    }
-}
-
-/* 超小屏适配 */
-@media(max-height:700px){
-
-    .ctrl{
-        width:15vw;
-        height:15vw;
-        font-size:28px;
-    }
-
-    .info-box{
-        width:56px;
-    }
-
-    .info-value{
-        font-size:20px;
-    }
-
-}
-
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body { width:100%; height:100%; overflow:hidden; font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+    background: radial-gradient(circle at top,#0f4d92,#02142d 70%); touch-action: manipulation; }
+
+.game-shell { position:relative; width:min(100vw,480px); aspect-ratio:9/16; max-height:100vh; overflow:hidden;
+    border-radius:28px; background: linear-gradient(180deg,#0d4d91,#07254f 50%,#04162f);
+    box-shadow: inset 0 0 50px rgba(255,255,255,.08), 0 0 40px rgba(0,0,0,.6); }
+
+.stars { position:absolute; inset:0; overflow:hidden; }
+.star { position:absolute; width:3px; height:3px; border-radius:50%; background:white; opacity:.7;
+    animation:twinkle 3s infinite alternate; }
+@keyframes twinkle { from{opacity:.2; transform:scale(.7);} to{opacity:1; transform:scale(1.4);} }
+
+.play-area { position:absolute; left:50%; top:48%; transform:translate(-50%,-50%); 
+    width:58%; aspect-ratio:10/20; border-radius:12px; 
+    border:3px solid rgba(180,220,255,.85);
+    background: linear-gradient(rgba(0,80,160,.25), rgba(0,20,50,.4));
+    box-shadow: 0 0 25px rgba(100,200,255,.6), inset 0 0 30px rgba(255,255,255,.1); 
+    overflow:hidden; }
+
+canvas { width:100%; height:100%; display:block; }
+
+.left-ui, .right-ui { position:absolute; display:flex; flex-direction:column; gap:16px; }
+.left-ui { left:4%; top:22%; }
+.right-ui { right:4%; top:18%; align-items:center; }
+
+.info-box { width:58px; padding:8px 4px; border-radius:10px;
+    background: linear-gradient(180deg, rgba(0,0,0,.5), rgba(0,35,90,.6));
+    border:1px solid rgba(255,255,255,.2); text-align:center; color:white; }
+
+.info-title { font-size:14px; margin-bottom:3px; }
+.info-value { font-size:22px; font-weight:bold; color:#e7f7ff; }
+
+.pause-btn { width:48px; height:48px; border-radius:50%; border:none;
+    background: radial-gradient(circle,#39d7ff,#0f5e96); color:white; font-size:22px; font-weight:bold;
+    box-shadow: 0 0 12px rgba(80,220,255,.7); }
+
+.next-wrap { text-align:center; color:white; font-size:16px; }
+.next-box { margin-top:6px; width:78px; height:78px; border-radius:10px;
+    background:rgba(0,0,0,.5); border:2px solid rgba(255,255,255,.2);
+    display:flex; justify-content:center; align-items:center; }
+
+.controls { position:absolute; left:50%; bottom:5%; transform:translateX(-50%); width:92%;
+    display:flex; justify-content:space-around; align-items:center; gap:8px; }
+
+.ctrl { width:58px; height:58px; border-radius:50%; border:none; color:white; 
+    font-size:28px; font-weight:bold; box-shadow: inset 0 3px 8px rgba(255,255,255,.4), 
+    0 5px 12px rgba(0,0,0,.5); }
+
+.left-btn  { background:linear-gradient(#86ff42,#38a800); }
+.right-btn { background:linear-gradient(#ff8cff,#bf38ff); }
+.down-btn  { background:linear-gradient(#4dfff3,#00a8a0); }
+.rotate-btn{ background:linear-gradient(#ffb18f,#ff5b4f); }
+
+.levelup { position:absolute; left:50%; top:38%; transform:translate(-50%,-50%); font-size:38px;
+    color:#ffe75f; font-weight:bold; opacity:0; text-shadow: 0 0 10px white, 0 0 25px gold; }
+
+.level-show { animation:lv 1.4s ease; }
+@keyframes lv { 0%{opacity:0; transform:translate(-50%,-50%) scale(.3);}
+    35%{opacity:1; transform:translate(-50%,-50%) scale(1.15);} 70%{opacity:1;} 100%{opacity:0;} }
 </style>
 </head>
-
 <body>
 
 <div class="game-shell">
-
     <div class="stars" id="stars"></div>
 
     <div class="left-ui">
-
-        <div class="info-box">
-            <div class="info-title">行数</div>
-            <div class="info-value" id="lines">0</div>
-        </div>
-
-        <div class="info-box">
-            <div class="info-title">分数</div>
-            <div class="info-value" id="score">0</div>
-        </div>
-
+        <div class="info-box"><div class="info-title">行数</div><div class="info-value" id="lines">0</div></div>
+        <div class="info-box"><div class="info-title">分数</div><div class="info-value" id="score">0</div></div>
     </div>
 
     <div class="right-ui">
-
-        <button class="pause-btn">Ⅱ</button>
-
-        <div class="next-wrap">
-            下一个
-
-            <div class="next-box">
-                <canvas id="next" width="72" height="72"></canvas>
-            </div>
+        <button class="pause-btn" id="pauseBtn">Ⅱ</button>
+        <div class="next-wrap">下一个
+            <div class="next-box"><canvas id="next" width="72" height="72"></canvas></div>
         </div>
-
     </div>
 
     <div class="play-area">
-
         <canvas id="board"></canvas>
-
-        <div class="levelup" id="levelText">
-            LEVEL UP
-        </div>
-
+        <div class="levelup" id="levelText">LEVEL UP</div>
     </div>
 
     <div class="controls">
-
         <button class="ctrl left-btn" id="leftBtn">←</button>
-
-        <button class="ctrl right-btn" id="rightBtn">→</button>
-
-        <button class="ctrl down-btn" id="downBtn">↓</button>
-
         <button class="ctrl rotate-btn" id="rotateBtn">↻</button>
-
+        <button class="ctrl right-btn" id="rightBtn">→</button>
+        <button class="ctrl down-btn" id="downBtn">↓</button>
     </div>
-
 </div>
 
 <script>
-
-/* 星空 */
-
-const stars=document.getElementById("stars");
-
-for(let i=0;i<55;i++){
-
-    const s=document.createElement("div");
-
-    s.className="star";
-
-    s.style.left=Math.random()*100+"%";
-    s.style.top=Math.random()*100+"%";
-
-    s.style.animationDelay=
-    Math.random()*3+"s";
-
-    s.style.opacity=Math.random();
-
-    stars.appendChild(s);
+// 音效 + 游戏逻辑
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function playSound(freq, duration, type = 'sine', vol = 0.3) {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = type; osc.frequency.value = freq; gain.gain.value = vol;
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(); setTimeout(() => osc.stop(), duration);
 }
 
-/* 游戏 */
-
-const COLS=10;
-const ROWS=20;
-
+const COLS=10, ROWS=20;
 const canvas=document.getElementById("board");
 const ctx=canvas.getContext("2d");
-
-canvas.width=300;
-canvas.height=600;
-
+canvas.width=300; canvas.height=600;
 const BLOCK=30;
 
 const nextCanvas=document.getElementById("next");
 const nctx=nextCanvas.getContext("2d");
 
-const colors=[
-null,
-"#4cc9ff",
-"#ffe14d",
-"#d16cff",
-"#5dff96",
-"#ff9c3d",
-"#ff5757",
-"#5d7dff"
-];
+const colors=[null,"#4cc9ff","#ffe14d","#d16cff","#5dff96","#ff9c3d","#ff5757","#5d7dff"];
 
-const pieces=[
-[],
-[[1,1,1,1]],
-[[2,2],[2,2]],
-[[0,3,0],[3,3,3]],
-[[0,4,4],[4,4,0]],
-[[5,5,0],[0,5,5]],
-[[6,0,0],[6,6,6]],
-[[0,0,7],[7,7,7]]
-];
+const pieces=[[], [[1,1,1,1]], [[2,2],[2,2]], [[0,3,0],[3,3,3]], [[0,4,4],[4,4,0]],
+    [[5,5,0],[0,5,5]], [[6,0,0],[6,6,6]], [[0,0,7],[7,7,7]] ];
 
-let board=
-Array.from(
-{length:ROWS},
-()=>Array(COLS).fill(0)
-);
+let board = Array.from({length:ROWS}, () => Array(COLS).fill(0));
+let score=0, lines=0, level=1, dropInterval=950, dropCounter=0, last=0, paused=false, gameOver=false;
 
-let score=0;
-let lines=0;
-let level=1;
+let nextPiece = createPiece();
+const player = { pos:{x:0,y:0}, matrix:null };
 
-function drawBlock(x,y,color){
-
-    ctx.fillStyle=color;
-
-    ctx.fillRect(
-    x*BLOCK,
-    y*BLOCK,
-    BLOCK,
-    BLOCK);
-
-    ctx.fillStyle=
-    "rgba(255,255,255,.25)";
-
-    ctx.fillRect(
-    x*BLOCK,
-    y*BLOCK,
-    BLOCK,
-    5);
-
-    ctx.shadowBlur=15;
-    ctx.shadowColor=color;
-
-    ctx.fillRect(
-    x*BLOCK+5,
-    y*BLOCK+5,
-    BLOCK-10,
-    BLOCK-10);
-
-    ctx.shadowBlur=0;
+function createPiece(){
+    const type = 1 + Math.floor(Math.random()*7);
+    return { matrix: pieces[type] };
 }
 
+// 透明玻璃质感立体方块
+function drawBlock(x, y, color) {
+    const px = x * BLOCK, py = y * BLOCK;
+    
+    // 主玻璃体（半透明）
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.85;
+    ctx.fillRect(px, py, BLOCK, BLOCK);
+    ctx.globalAlpha = 1;
+    
+    // 高光（玻璃折射）
+    ctx.fillStyle = "rgba(255,255,255,0.75)";
+    ctx.fillRect(px + 3, py + 3, BLOCK-9, 9);
+    
+    // 内阴影
+    ctx.fillStyle = "rgba(0,0,0,0.45)";
+    ctx.fillRect(px + 8, py + 12, BLOCK-14, BLOCK-18);
+    
+    // 边框
+    ctx.strokeStyle = "rgba(255,255,255,0.9)";
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(px + 2, py + 2, BLOCK-4, BLOCK-4);
+    
+    ctx.strokeStyle = "rgba(0,0,0,0.4)";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(px + 6, py + 6, BLOCK-12, BLOCK-12);
+}
+
+// 清晰网格
 function draw(){
-
-    ctx.clearRect(
-    0,0,
-    canvas.width,
-    canvas.height);
-
-    for(let y=0;y<ROWS;y++){
-
-        for(let x=0;x<COLS;x++){
-
-            ctx.strokeStyle=
-            "rgba(255,255,255,.08)";
-
-            ctx.strokeRect(
-            x*BLOCK,
-            y*BLOCK,
-            BLOCK,
-            BLOCK);
-
-            if(board[y][x]){
-
-                drawBlock(
-                x,
-                y,
-                colors[board[y][x]]);
-            }
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    
+    for(let y=0; y<ROWS; y++){
+        for(let x=0; x<COLS; x++){
+            ctx.strokeStyle = "rgba(255,255,255,0.12)";
+            ctx.lineWidth = 1;
+            ctx.strokeRect(x*BLOCK, y*BLOCK, BLOCK, BLOCK);
+            
+            if(board[y][x]) drawBlock(x, y, colors[board[y][x]]);
         }
     }
-
-    player.matrix.forEach((row,y)=>{
-
-        row.forEach((v,x)=>{
-
-            if(v){
-
-                drawBlock(
-                x+player.pos.x,
-                y+player.pos.y,
-                colors[v]);
-            }
-
+    
+    player.matrix.forEach((row,y) => {
+        row.forEach((v,x) => {
+            if(v) drawBlock(x + player.pos.x, y + player.pos.y, colors[v]);
         });
-
     });
-
 }
 
-function collide(){
-
-    const m=player.matrix;
-    const o=player.pos;
-
-    for(let y=0;y<m.length;y++){
-
-        for(let x=0;x<m[y].length;x++){
-
-            if(
-            m[y][x] &&
-            (board[y+o.y] &&
-            board[y+o.y][x+o.x])!==0){
-
-                return true;
-            }
+function collide(){ /* ... 保持不变 ... */
+    const m = player.matrix, o = player.pos;
+    for(let y=0; y<m.length; y++){
+        for(let x=0; x<m[y].length; x++){
+            if(m[y][x] && (!board[y+o.y] || board[y+o.y][x+o.x] !== 0)) return true;
         }
     }
-
     return false;
 }
 
-function merge(){
-
-    player.matrix.forEach((row,y)=>{
-
-        row.forEach((v,x)=>{
-
-            if(v){
-
-                board[y+player.pos.y]
-                [x+player.pos.x]=v;
-
-            }
-
-        });
-
-    });
-
+function merge(){ /* ... 保持不变 ... */
+    player.matrix.forEach((row,y) => row.forEach((v,x) => { if(v) board[y+player.pos.y][x+player.pos.x] = v; }));
 }
 
-function rotate(matrix){
-
-    return matrix[0]
-    .map((_,i)=>
-    matrix.map(r=>r[i]).reverse());
-
-}
+function rotate(matrix){ return matrix[0].map((_,i) => matrix.map(r => r[i]).reverse()); }
 
 function sweep(){
-
-    let cleared=0;
-
-    outer:
-    for(let y=ROWS-1;y>=0;y--){
-
-        for(let x=0;x<COLS;x++){
-
-            if(board[y][x]===0){
-
-                continue outer;
-
-            }
+    let cleared = 0;
+    for(let y=ROWS-1; y>=0; y--){
+        if(board[y].every(cell => cell !== 0)){
+            board.splice(y,1);
+            board.unshift(Array(COLS).fill(0));
+            cleared++; y++;
         }
-
-        board.splice(y,1);
-
-        board.unshift(
-        Array(COLS).fill(0));
-
-        y--;
-
-        cleared++;
-
-        flash();
     }
-
     if(cleared){
-
-        lines+=cleared;
-
-        score+=cleared*100;
-
-        if(lines>=level*10){
-
+        playSound(880, 70); setTimeout(()=>playSound(1350, 110),70);
+        const scores = [0,100,300,500,800];
+        score += scores[cleared] || 800;
+        lines += cleared;
+        if(lines >= level*12){  // 升级变慢
             level++;
-
-            levelAnim();
-
-            dropInterval=
-            Math.max(150,
-            800-level*60);
+            document.getElementById("levelText").classList.add("level-show");
+            setTimeout(()=>{ document.getElementById("levelText").classList.remove("level-show"); },1400);
+            dropInterval = Math.max(280, 950 - level*45);
         }
-
         updateUI();
     }
 }
 
-function flash(){
-
-    canvas.classList.add("flash");
-
-    setTimeout(()=>{
-
-        canvas.classList.remove("flash");
-
-    },220);
-
+function drawNext(){ /* ... 保持不变 ... */
+    nctx.clearRect(0,0,72,72);
+    const offset = nextPiece.matrix[0].length === 4 ? 2 : 10;
+    nextPiece.matrix.forEach((row,y)=> row.forEach((v,x)=>{ 
+        if(v){ nctx.fillStyle=colors[v]; nctx.fillRect(x*18+offset, y*18+12, 16,16); }
+    }));
 }
-
-function levelAnim(){
-
-    const lv=
-    document.getElementById("levelText");
-
-    lv.classList.add("level-show");
-
-    setTimeout(()=>{
-
-        lv.classList.remove("level-show");
-
-    },1400);
-
-}
-
-function createPiece(){
-
-    const type=
-    1+Math.floor(Math.random()*7);
-
-    return {
-        matrix:pieces[type]
-    };
-}
-
-let nextPiece=createPiece();
-
-const player={
-    pos:{x:0,y:0},
-    matrix:null
-};
 
 function resetPlayer(){
-
-    player.matrix=nextPiece.matrix;
-
-    nextPiece=createPiece();
-
-    player.pos.y=0;
-
-    player.pos.x=
-    (COLS/2|0)-
-    (player.matrix[0].length/2|0);
-
+    player.matrix = nextPiece.matrix;
+    nextPiece = createPiece();
+    player.pos.y = 0;
+    player.pos.x = (COLS/2 | 0) - (player.matrix[0].length/2 | 0);
     drawNext();
-
-}
-
-function drawNext(){
-
-    nctx.clearRect(0,0,72,72);
-
-    nextPiece.matrix.forEach((row,y)=>{
-
-        row.forEach((v,x)=>{
-
-            if(v){
-
-                nctx.fillStyle=
-                colors[v];
-
-                nctx.fillRect(
-                x*18+10,
-                y*18+10,
-                16,
-                16);
-
-            }
-
-        });
-
-    });
-
+    if(collide()) { gameOver=true; playSound(180,900,'sawtooth'); }
 }
 
 function playerDrop(){
-
     player.pos.y++;
-
     if(collide()){
-
-        player.pos.y--;
-
-        merge();
-
-        sweep();
-
-        resetPlayer();
-
-    }
-
-    dropCounter=0;
+        player.pos.y--; merge(); sweep(); resetPlayer(); playSound(420,55);
+    } else playSound(260,18,'sine',0.1);
 }
 
 function move(dir){
-
-    player.pos.x+=dir;
-
-    if(collide()){
-
-        player.pos.x-=dir;
-
-    }
+    player.pos.x += dir;
+    if(collide()) player.pos.x -= dir;
+    else playSound(420,16);
 }
 
 function playerRotate(){
-
-    const pos=player.pos.x;
-
-    player.matrix=
-    rotate(player.matrix);
-
-    if(collide()){
-
-        player.pos.x=pos;
-
-    }
+    const old = player.matrix;
+    player.matrix = rotate(player.matrix);
+    if(collide()) player.matrix = old;
+    else playSound(680,28);
 }
 
 function updateUI(){
-
-    document.getElementById("score")
-    .innerText=score;
-
-    document.getElementById("lines")
-    .innerText=lines;
-
+    document.getElementById("score").innerText = score;
+    document.getElementById("lines").innerText = lines;
 }
-
-let dropCounter=0;
-let dropInterval=800;
-let last=0;
 
 function update(time=0){
-
-    const delta=time-last;
-
-    last=time;
-
-    dropCounter+=delta;
-
-    if(dropCounter>dropInterval){
-
-        playerDrop();
-
-    }
-
+    if(paused || gameOver) return requestAnimationFrame(update);
+    const delta = time - last; last = time;
+    dropCounter += delta;
+    if(dropCounter > dropInterval){ playerDrop(); dropCounter=0; }
     draw();
-
     requestAnimationFrame(update);
-
 }
 
-/* 按钮 */
+// 按钮绑定
+document.getElementById("leftBtn").onclick = () => move(-1);
+document.getElementById("rightBtn").onclick = () => move(1);
+document.getElementById("downBtn").onclick = () => { player.pos.y++; if(collide()) player.pos.y--; else playerDrop(); };
+document.getElementById("rotateBtn").onclick = playerRotate;
 
-document.getElementById("leftBtn")
-.onclick=()=>move(-1);
+document.getElementById("pauseBtn").onclick = () => {
+    paused = !paused;
+    document.getElementById("pauseBtn").textContent = paused ? "▶" : "Ⅱ";
+};
 
-document.getElementById("rightBtn")
-.onclick=()=>move(1);
-
-document.getElementById("downBtn")
-.onclick=()=>playerDrop();
-
-document.getElementById("rotateBtn")
-.onclick=()=>playerRotate();
-
-/* 键盘 */
-
-document.addEventListener(
-"keydown",e=>{
-
-    if(e.key==="ArrowLeft")
-    move(-1);
-
-    else if(e.key==="ArrowRight")
-    move(1);
-
-    else if(e.key==="ArrowDown")
-    playerDrop();
-
-    else if(e.key==="ArrowUp")
-    playerRotate();
-
+document.addEventListener("keydown", e => {
+    if(gameOver) return;
+    if(e.key==="ArrowLeft") move(-1);
+    if(e.key==="ArrowRight") move(1);
+    if(e.key==="ArrowDown") playerDrop();
+    if(e.key==="ArrowUp") playerRotate();
 });
 
-resetPlayer();
-updateUI();
+function startGame(){
+    board = Array.from({length:ROWS}, () => Array(COLS).fill(0));
+    score=0; lines=0; level=1; dropInterval=950; paused=false; gameOver=false;
+    nextPiece = createPiece(); resetPlayer(); updateUI();
+}
+
+// 星星
+const starsContainer = document.getElementById("stars");
+for(let i=0; i<60; i++){
+    const s = document.createElement("div");
+    s.className="star";
+    s.style.left = Math.random()*100 + "%";
+    s.style.top = Math.random()*100 + "%";
+    s.style.animationDelay = Math.random()*4 + "s";
+    starsContainer.appendChild(s);
+}
+
+startGame();
 update();
-
 </script>
-
 </body>
 </html>
